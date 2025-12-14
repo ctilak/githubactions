@@ -1,0 +1,62 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dotnet: [ "9.0.x" ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+          cache: true
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ matrix.dotnet }}-${{ hashFiles('**/*.sln', '**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-${{ matrix.dotnet }}-
+
+      - name: Restore
+        run: dotnet restore SimpleApp.sln --configfile NuGet.config
+
+      - name: Build
+        run: dotnet build SimpleApp.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test SimpleApp.sln --configuration Release --no-build --verbosity normal --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            **/TestResults/*.trx
+            **/TestResults/**/*.trx
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify formatting (dotnet format)
+        uses: github/super-linter@v7.0.0
+        env:
+          VALIDATE_ALL_CODEBASE: true
+          DEFAULT_BRANCH: main
+          FILTER_REGEX_EXCLUDE: ".github/workflows/.*"
