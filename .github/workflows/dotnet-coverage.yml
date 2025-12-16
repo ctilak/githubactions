@@ -1,14 +1,17 @@
 name: .NET Coverage
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_call:
+    inputs:
+      configuration:
+        required: false
+        type: string
+        default: Release
 
 jobs:
   coverage:
-    runs-on: ubuntu-latest
+    if: true
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,7 +25,7 @@ jobs:
         run: dotnet restore SimpleApp.sln --configfile NuGet.config
 
       - name: Test with Coverage
-        run: |
+          dotnet test SimpleApp.sln -c ${{ inputs.configuration }} --no-build \
           dotnet test SimpleApp.sln -c Release --no-build \
             /p:CollectCoverage=true \
             /p:CoverletOutputFormat=cobertura \

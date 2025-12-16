@@ -48,6 +48,18 @@ jobs:
             **/TestResults/*.trx
             **/TestResults/**/*.trx
 
+  coverage:
+    needs: build-and-test
+    uses: ./.github/workflows/dotnet-coverage.yml
+    with:
+      configuration: Release
+
+  codeql:
+    needs: build-and-test
+    uses: ./.github/workflows/codeql.yml
+    with:
+      buildConfiguration: Release
+
   lint:
     runs-on: ubuntu-latest
     steps:
