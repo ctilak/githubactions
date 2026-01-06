@@ -1,0 +1,44 @@
+name: "Dotnet Setup and Restore"
+description: "Checkout repository, setup .NET, and optionally run dotnet restore for a given solution/project."
+inputs:
+  dotnet-version:
+    description: 'Version passed to actions/setup-dotnet (e.g. "9.0.x"). When empty the setup step is skipped.'
+    required: false
+    default: ''
+  solution:
+    description: 'Solution or project file to restore (e.g. SimpleApp.sln). When empty the restore step is skipped.'
+    required: false
+    default: ''
+  configfile:
+    description: 'Path to NuGet.config to pass to dotnet restore. Optional.'
+    required: false
+    default: ''
+  cache:
+    description: 'Enable caching for actions/setup-dotnet (true/false).'
+    required: false
+    default: 'false'
+  run-restore:
+    description: 'Whether to run `dotnet restore`. Set to "false" to skip restore (useful when caching needs to run between setup and restore).'
+    required: false
+    default: 'true'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      if: ${{ inputs.dotnet-version != '' }}
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+        cache: ${{ inputs.cache }}
+
+    - name: Restore (with NuGet.config)
+      if: ${{ inputs.run-restore == 'true' && inputs.configfile != '' && inputs.solution != '' }}
+      run: dotnet restore ${{ inputs.solution }} --configfile ${{ inputs.configfile }}
+
+    - name: Restore (without NuGet.config)
+      if: ${{ inputs.run-restore == 'true' && inputs.configfile == '' && inputs.solution != '' }}
+      run: dotnet restore ${{ inputs.solution }}

@@ -13,14 +13,12 @@ jobs:
       matrix:
         dotnet: [ "9.0.x" ]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - name: Setup and (optional) Restore
+        uses: ./.github/actions/dotnet-setup-restore
         with:
           dotnet-version: ${{ matrix.dotnet }}
-          cache: true
+          cache: 'true'
+          run-restore: 'false'
 
       - name: Cache NuGet
         uses: actions/cache@v4

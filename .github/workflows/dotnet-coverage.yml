@@ -12,16 +12,14 @@ jobs:
   coverage:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 9
-        uses: actions/setup-dotnet@v4
+      - name: Setup and Restore
+        uses: ./.github/actions/dotnet-setup-restore
         with:
           dotnet-version: "9.0.x"
-
-      - name: Restore
-        run: dotnet restore SimpleApp.sln --configfile NuGet.config
+          solution: SimpleApp.sln
+          configfile: NuGet.config
+          cache: 'false'
+          run-restore: 'true'
 
       - name: Test with Coverage
         run: |
